@@ -1,13 +1,14 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 const app = express();
 
 app.use(express.json());
 
 const users = []
-const generateToken = () => {
-    return Math.random();
 
-}
+
+
 app.get('/', (req, res)=>{
     res.send(`Hello...`)
 })
@@ -26,7 +27,7 @@ app.post('/signup', (req, res)=>{
 
 app.post('/signin', (req, res)=> {
     const username = req.body.username;
-    const password  = req.body.password
+    const password  = req.body.password;
     const currUser = users.find((user)=>{
         if(user.username == username && user.password == password){
             return true;
@@ -35,8 +36,9 @@ app.post('/signin', (req, res)=> {
         }
     })
     if(currUser){
-        const token  = generateToken();
-        currUser.token = token;
+        const token = jwt.sign({
+            username : username
+        }, process.env.JWT_SECRET)
         console.log(users);
         res.json({
             msg: token
@@ -50,8 +52,11 @@ app.post('/signin', (req, res)=> {
 
 app.get('/me', (req, res)=>{
     const token = req.headers.token;
+    const decodedInfo = jwt.verify(token, process.env.JWT_SECRET)
+    const username = decodedInfo.username;
+
     const userMe =  users.find((u)=>{
-        if(u.token == token){
+        if(u.username == username){
             return true;
         }else{
             return false
